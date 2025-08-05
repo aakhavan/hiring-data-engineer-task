@@ -18,7 +18,7 @@ jobs:
         run: cp .env.example .env
 
       - name: Build and start services
-        run: docker-compose up -d --build
+        run: docker compose up -d --build
 
       - name: Wait for Airflow to be healthy
         run: |
@@ -31,8 +31,8 @@ jobs:
           echo "Airflow is healthy!"
 
       - name: Run DAG tests
-        run: docker-compose exec -T airflow pytest
+        run: docker compose exec -T airflow pytest
 
       - name: Cleanup services
         if: always()
-        run: docker-compose down --volumes
+        run: docker compose down --volumes
