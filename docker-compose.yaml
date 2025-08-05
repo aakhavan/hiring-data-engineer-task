@@ -11,7 +11,7 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -47,11 +47,51 @@ services:
       - "8123:8123"
       - "9000:9000"
     volumes:
+      # Mount our custom user configuration to allow remote connections
+      - ./clickhouse_config/users.xml:/etc/clickhouse-server/users.d/default-user-access.xml
       - clickhouse_data:/var/lib/clickhouse
     healthcheck:
       test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
       interval: 5s
       retries: 5
+
+  # -------------------------------------
+  # Airflow
+  # -------------------------------------
+  airflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: airflow
+    environment:
+      # Airflow Core Configuration
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      # Airflow Database Connection (using the existing Postgres service)
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/postgres
+      # The following variables are used by the entrypoint to initialize the DB and create a user
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_USER:-admin}
+      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_PASSWORD:-admin}
+      # Define connections using Airflow's standard environment variable format.
+      # These will be automatically created on startup.
+      AIRFLOW_CONN_CLICKHOUSE_DEFAULT: "clickhouse://${CLICKHOUSE_USER:-default}:${CLICKHOUSE_PASSWORD:-}@${CLICKHOUSE_HOST:-clickhouse}:9000/default"
+      AIRFLOW_CONN_POSTGRES_SOURCE: "postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@${POSTGRES_HOST:-postgres}:5432/${POSTGRES_DB:-postgres}"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      # Mount the SQL directory as a volume to ensure local changes are reflected instantly.
+      - ./pipeline:/opt/airflow/pipeline
+      - ./tests:/opt/airflow/tests
+    ports:
+      # Map to a different host port (e.g., 8081) to avoid common conflicts on Windows.
+      - "8081:8080"
+    command: standalone
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
 
   # -------------------------------------
   # Flyway Migrations

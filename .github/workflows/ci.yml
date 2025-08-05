@@ -1,0 +1,38 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "**" ] # Run on pushes to all branches (e.g., main, feat/new-pipeline, etc.)
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-pipeline:
+    name: Test Data Pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create .env file for Docker Compose
+        run: cp .env.example .env
+
+      - name: Build and start services
+        run: docker-compose up -d --build
+
+      - name: Wait for Airflow to be healthy
+        run: |
+          echo "Waiting for Airflow webserver..."
+          # Use curl to poll the Airflow health check endpoint
+          until [[ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/health)" == "200" ]]; do
+            echo -n "."
+            sleep 5
+          done
+          echo "Airflow is healthy!"
+
+      - name: Run DAG tests
+        run: docker-compose exec -T airflow pytest
+
+      - name: Cleanup services
+        if: always()
+        run: docker-compose down --volumes

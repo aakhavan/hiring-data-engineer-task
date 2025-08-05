@@ -1,0 +1,31 @@
+# Configuration for the dynamic retail data pipeline.
+# This file defines the data sources to be replicated and the analytical scripts to be executed.
+
+# Section 1: Source Tables
+# Defines the tables to be replicated from the PostgreSQL source ('raw' schema in ClickHouse)
+# into native ClickHouse MergeTree tables in the 'reporting' schema for performance.
+sources:
+  - name: advertiser
+    incremental_key: updated_at
+
+  - name: campaign
+    incremental_key: updated_at
+
+  - name: impressions
+    incremental_key: created_at
+
+  - name: clicks
+    incremental_key: created_at
+
+# Section 2: Analytical Scripts
+# Defines the SQL scripts that run after the source data has been replicated.
+# These scripts perform transformations and create final reporting tables.
+# The DAG will create one task for each script listed here.
+analytics:
+  - name: daily_campaign_performance
+    script: analytics/reporting_daily_campaign_performance.sql
+    description: "Aggregates daily impressions and clicks to calculate campaign-level KPIs."
+
+  - name: advertiser_summary
+    script: analytics/reporting_advertiser_summary.sql
+    description: "Summarizes lifetime performance metrics for each advertiser."

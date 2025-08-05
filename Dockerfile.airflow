@@ -1,0 +1,33 @@
+# A multi-stage Docker build is a best practice for creating smaller, more secure, and more efficient images.
+
+# Stage 1: Use a lightweight, clean Python image to compile dependencies.
+# This avoids any conflicts with the complex Airflow base image environment.
+FROM python:3.12-slim as builder
+
+# Switch to root to install system dependencies needed for package installation.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install uv, our dependency management tool
+RUN pip install uv
+
+# Copy the project definition and compile it into a locked requirements file.
+COPY pyproject.toml /pyproject.toml
+RUN uv pip compile /pyproject.toml -o /requirements.lock
+
+# Stage 2: Build the final, production Airflow image.
+FROM apache/airflow:2.9.2-python3.12
+
+USER root
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+USER airflow
+
+COPY --chown=airflow:airflow --from=builder /requirements.lock /tmp/requirements.lock
+
+RUN pip install uv && uv pip install --no-cache -r /tmp/requirements.lock && rm /tmp/requirements.lock
+
+COPY pipeline/sql /opt/airflow/pipeline/sql/
