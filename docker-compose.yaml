@@ -46,6 +46,9 @@ services:
     ports:
       - "8123:8123"
       - "9000:9000"
+    environment:
+      # Pass the password from the .env file into the ClickHouse container.
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
     volumes:
       # Mount our custom user configuration to allow remote connections
       - ./clickhouse_config/users.xml:/etc/clickhouse-server/users.d/default-user-access.xml

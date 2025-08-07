@@ -71,23 +71,20 @@ with DAG(
     with TaskGroup(group_id="replicate_sources") as replication_group:
         for source in config["sources"]:
             table_name = source["name"]
-            incremental_key = source["incremental_key"]
 
-            # This SQL statement performs an incremental load from the 'raw' schema
-            # to the 'intermediate' schema.
-            replication_sql = f"""
-            INSERT INTO intermediate.{table_name}
-            SELECT * FROM raw.{table_name}
-            WHERE {incremental_key} > (
-                SELECT coalesce(max({incremental_key}), toDateTime('1970-01-01 00:00:00', 3, 'UTC'))
-                FROM intermediate.{table_name}
-            );
-            """
+            # This SQL block performs a full, idempotent "truncate-and-load".
+            # It ensures the intermediate table is a perfect, clean copy of the
+            # source data. We provide a list of statements to the operator
+            # to avoid multi-statement errors.
+            replication_sql_statements = [
+                f"TRUNCATE TABLE IF EXISTS intermediate.{table_name}",
+                f"INSERT INTO intermediate.{table_name} SELECT * FROM raw.{table_name}",
+            ]
 
             ClickHouseOperator(
                 task_id=f"replicate_{table_name}",
                 clickhouse_conn_id="clickhouse_default",
-                sql=replication_sql,
+                sql=replication_sql_statements,
             )
 
     # --- 3. Analytics Group ---

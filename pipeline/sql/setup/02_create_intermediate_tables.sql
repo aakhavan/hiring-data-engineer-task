@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS intermediate.advertiser
     updated_at Nullable(DateTime64(3, 'UTC')),
     created_at Nullable(DateTime64(3, 'UTC'))
 )
-ENGINE = MergeTree()
+ENGINE = ReplacingMergeTree()
 ORDER BY id;
 
 CREATE TABLE IF NOT EXISTS intermediate.campaign
@@ -24,9 +24,8 @@ CREATE TABLE IF NOT EXISTS intermediate.campaign
     updated_at    Nullable(DateTime64(3, 'UTC')),
     created_at    Nullable(DateTime64(3, 'UTC'))
 )
-ENGINE = MergeTree()
-ORDER BY (advertiser_id, id)
-SETTINGS allow_nullable_key = 1;
+ENGINE = ReplacingMergeTree()
+ORDER BY id;
 
 CREATE TABLE IF NOT EXISTS intermediate.impressions
 (
@@ -34,9 +33,8 @@ CREATE TABLE IF NOT EXISTS intermediate.impressions
     campaign_id Nullable(UInt64),
     created_at  Nullable(DateTime64(3, 'UTC'))
 )
-ENGINE = MergeTree()
-ORDER BY (campaign_id, id)
-SETTINGS allow_nullable_key = 1;
+ENGINE = ReplacingMergeTree()
+ORDER BY id;
 
 CREATE TABLE IF NOT EXISTS intermediate.clicks
 (
@@ -44,6 +42,5 @@ CREATE TABLE IF NOT EXISTS intermediate.clicks
     campaign_id Nullable(UInt64),
     created_at  Nullable(DateTime64(3, 'UTC'))
 )
-ENGINE = MergeTree()
-ORDER BY (campaign_id, id)
-SETTINGS allow_nullable_key = 1;
+ENGINE = ReplacingMergeTree()
+ORDER BY id;

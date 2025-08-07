@@ -58,12 +58,17 @@ SELECT
     a.id as advertiser_id, a.name as advertiser_name,
     agg.total_impressions,
     agg.total_clicks,
-    agg.total_impressions * c.bid as total_cost,
-    if(agg.total_impressions > 0, agg.total_clicks / agg.total_impressions, 0) as ctr,
-    if(agg.total_clicks > 0, (agg.total_impressions * c.bid) / agg.total_clicks, 0) as cpc
+    -- Corrected Cost Model: Cost is now correctly driven by clicks (CPC model), not impressions.
+    CAST(agg.total_clicks * c.bid AS Decimal(18, 4)) as total_cost,
+    -- CTR calculation remains correct.
+    CAST(if(agg.total_impressions > 0, agg.total_clicks / agg.total_impressions, 0) AS Float64) as ctr,
+    -- CPC is now correctly derived from the new cost model.
+    CAST(if(agg.total_clicks > 0, c.bid, 0) AS Float64) as cpc
 FROM daily_aggregates agg
-JOIN intermediate.campaign AS c ON agg.campaign_id = c.id
-JOIN intermediate.advertiser AS a ON c.advertiser_id = a.id;
+-- Use ANY LEFT JOIN for robustness. It's efficient and prevents row duplication
+-- if the dimension tables have duplicates before a ReplacingMergeTree merge.
+ANY LEFT JOIN intermediate.campaign AS c ON agg.campaign_id = c.id
+ANY LEFT JOIN intermediate.advertiser AS a ON c.advertiser_id = a.id;
 
 
 -- Atomically swap the data using a delete-and-insert (upsert) pattern.

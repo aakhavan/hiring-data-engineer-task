@@ -5,9 +5,9 @@ It grants access from any IP address, which is safe for local development.
 <clickhouse>
     <users>
         <pycharm_user>
-            <password>a_much_better_password</password> <!-- It's good practice to use a stronger password -->
+            <!-- The password is not stored here directly. Instead, it's read from an environment variable. -->
+            <password_from_env>CLICKHOUSE_PASSWORD</password_from_env>
             <networks>
-                <!-- Allow connection from any IP address -->
                 <ip>::/0</ip>
             </networks>
             <profile>default</profile>
