@@ -26,7 +26,7 @@ CREATE TABLE reporting.intermediate_daily_performance
 ENGINE = MergeTree ORDER BY (report_date, campaign_id) AS
 WITH
     -- Define a watermark to only process recent data. Use a 2-day lookback for resilience.
-    -- `coalesce` correctly handles the initial run when the destination table is empty (max(date) is NULL).
+    -- I discovered somehow CH returns max(date==NULL) as 1970-01-01, following is a workaround for that.
     watermark AS (
         SELECT CASE WHEN max(report_date) = '1970-01-01' THEN max(report_date)
             ELSE date_sub(day , 2, max(report_date)) END as start_date
@@ -34,9 +34,6 @@ WITH
     ),
     -- Combine impressions and clicks into a single event stream.
     all_events AS (
-        -- We use `assumeNotNull` on `campaign_id` because the `WHERE` clause guarantees it's not NULL.
-        -- This casts the column from Nullable(UInt64) to UInt64, which is required for it to be used
-        -- in the MergeTree sorting key without enabling `allow_nullable_key`.
         SELECT assumeNotNull(toDate(created_at)) as report_date, assumeNotNull(campaign_id) as campaign_id, 1 as impression, 0 as click
         FROM intermediate.impressions
         WHERE created_at IS NOT NULL AND campaign_id IS NOT NULL AND report_date >= (SELECT start_date FROM watermark)

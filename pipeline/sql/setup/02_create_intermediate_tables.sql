@@ -1,6 +1,6 @@
 -- Create the destination tables in the 'intermediate' schema with the efficient MergeTree engine.
 -- These tables will hold the replicated data from the 'raw' (PostgreSQL) schema.
--- Having them as native tables is crucial for analytical query performance.
+
 
 CREATE TABLE IF NOT EXISTS intermediate.advertiser
 (

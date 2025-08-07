@@ -18,8 +18,7 @@ PRIMARY KEY (advertiser_id);
 -- Ensure the table is empty before inserting the new summary. This makes the script idempotent.
 TRUNCATE TABLE IF EXISTS reporting.advertiser_summary;
 
--- To avoid a nested aggregation error, we first aggregate the sums in a CTE,
--- and then perform the final KPI calculations in the final SELECT.
+
 INSERT INTO reporting.advertiser_summary (advertiser_id, advertiser_name, total_cost, total_impressions, total_clicks, avg_ctr, avg_cpc, updated_at)
 WITH advertiser_sums AS (
     SELECT
@@ -34,7 +33,6 @@ WITH advertiser_sums AS (
 SELECT
     advertiser_id,
     advertiser_name,
-    -- Explicitly cast calculated fields to match the target table's schema.
     CAST(lifetime_cost AS Decimal(18, 4)) as total_cost,
     lifetime_impressions,
     lifetime_clicks,
