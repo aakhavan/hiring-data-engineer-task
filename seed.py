@@ -5,14 +5,16 @@ import datetime
 from datetime import date, timedelta, datetime
 
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5433") # different port to my local deployment instance
 POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "postgres") # Not a good practice at all, but we leave it like that for this project ;)
 
 
 def get_connection():
     return psycopg.connect(
         f"host={POSTGRES_HOST} port={POSTGRES_PORT} dbname={POSTGRES_DB} user={POSTGRES_USER}",
+        password=POSTGRES_PASSWORD,
         autocommit=False,
     )
 

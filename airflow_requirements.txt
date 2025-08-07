@@ -1,0 +1,6 @@
+apache-airflow[postgres]==2.9.2
+airflow-clickhouse-plugin
+pyyaml>=6.0.1
+
+# For testing in the CI environment
+pytest

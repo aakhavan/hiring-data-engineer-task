@@ -8,6 +8,16 @@ dependencies = [
     "black>=25.1.0",
     "psycopg[binary]>=3.2.6",
     "ruff>=0.11.0",
+    "python-dotenv>=1.0.1",
+    # Airflow dependencies
+    "pyyaml>=6.0.1",
+    "apache-airflow[postgres]==2.9.2",
+    "airflow-clickhouse-plugin",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
 ]
 
 [tool.black]

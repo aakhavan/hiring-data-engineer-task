@@ -1,0 +1,17 @@
+<!--
+This configuration file defines a dedicated user for external tools like PyCharm.
+It grants access from any IP address, which is safe for local development.
+-->
+<clickhouse>
+    <users>
+        <pycharm_user>
+            <!-- The password is not stored here directly. Instead, it's read from an environment variable. -->
+            <password_from_env>CLICKHOUSE_PASSWORD</password_from_env>
+            <networks>
+                <ip>::/0</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+        </pycharm_user>
+    </users>
+</clickhouse>
