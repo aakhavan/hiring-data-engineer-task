@@ -48,6 +48,7 @@ services:
       - "9000:9000"
     environment:
       # Pass the password from the .env file into the ClickHouse container.
+      CLICKHOUSE_USER: pycharm_user
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
     volumes:
       # Mount our custom user configuration to allow remote connections
