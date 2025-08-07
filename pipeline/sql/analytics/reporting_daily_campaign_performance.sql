@@ -26,6 +26,7 @@ CREATE TABLE reporting.intermediate_daily_performance
 ENGINE = MergeTree ORDER BY (report_date, campaign_id) AS
 WITH
     -- Define a watermark to only process recent data. Use a 2-day lookback for resilience.
+
     -- I discovered somehow CH returns max(date==NULL) as 1970-01-01, following is a workaround for that.
     watermark AS (
         SELECT CASE WHEN max(report_date) = '1970-01-01' THEN max(report_date)
